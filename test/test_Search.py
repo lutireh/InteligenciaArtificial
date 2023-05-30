@@ -45,7 +45,7 @@ class EuclidianDistanceTest(unittest.TestCase):
 
     def testRunSingleObjective(self):
         Search.getInstance().setGoalsNodes(["Rodoviaria"])
-        Search.getInstance().run()
+        Search.getInstance().aStar("Patron")
 
     def testRunMultipleObjective(self):
         Search.getInstance().setGoalsNodes(["FT", "Rodoviaria"])

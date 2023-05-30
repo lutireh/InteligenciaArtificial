@@ -27,6 +27,8 @@ class Search:
         self._closedListFromNode = {}
         self._goalsNodes = []
         self._solution = []
+        self._solutionOpenList = []
+        self._solutionCloseList = []
         self._heuristic = HeuristicEnum.ADMISSIBLE if useHeuristic is None else useHeuristic
         self._heuristicTime = 1 if self._heuristic is HeuristicEnum.ADMISSIBLE else 15
         self._currentGoalNode = None
@@ -94,13 +96,13 @@ class Search:
 
     def closestGoalNode(self, currentNode):
         closeNodeDistance = EuclidianDistance.getInstance().getDistanceBetweenStreets(currentNode, self._goalsNodes[0])
-        closeNode = self._goalsNodes[0]
+        closeGoalNode = self._goalsNodes[0]
         for node in self._goalsNodes:
             tempNode = EuclidianDistance.getInstance().getDistanceBetweenStreets(currentNode, node)
             if  tempNode < closeNodeDistance:
                 closeNodeDistance = tempNode
-                closeNode = node
-        return closeNode
+                closeGoalNode = node
+        return closeGoalNode
 
 
 
@@ -114,22 +116,20 @@ class Search:
     def functionOfX(self, node, accumulatedCost):
         return self.avaliationFunction(accumulatedCost, self.heuristcFunction(node))
 
-    def run(self):
+    def aStar(self, initialNode):
 
-        self._currentGoalNode = self.closestGoalNode(self._centralNode)
+        self._currentGoalNode = self.closestGoalNode(initialNode)
 
         accumulatedCost = {}
-        accumulatedCost[self._centralNode] = 0
+        accumulatedCost[initialNode] = 0
         print(f'Custo Inicial: {accumulatedCost}')
 
         # funciona como se fosse uma lista ligada, armazena qual nó é "pai" de qual
         previousNode = {}
-        previousNode[self._centralNode] = self._centralNode  # o nó inicial não tem nó anterior
+        previousNode[initialNode] = initialNode  # o nó inicial não tem nó anterior
         print(f'Previous Inicial: {previousNode}')
 
-
-
-        self.addToOpenList(self._centralNode)  # inicial começa como aberto para algoritmo iniciar por ele
+        self.addToOpenList(initialNode)  # inicial começa como aberto para algoritmo iniciar por ele
 
         while len(self._openList) > 0:
             currentNode = None
@@ -155,10 +155,10 @@ class Search:
                 self.addToSolution(currentNode)
                 self._solution.reverse()  # inverte a ordem, inicia pelo nó objetivo e vai até o inicial
 
-                print("\n<-------------------------------------------------------------------------->\n")
+                print("\n--------------------------------------------------------------------------\n")
 
-                print(("lista final de fechados: "+str(self._closedList)))
-                print("\nlista final de abertos: "+str(self._openList))
+                print(f"lista final de fechados: {self._closedList}\n")
+                print(f"lista final de abertos: {self._openList}")
 
                 print("\n<-------------------------------------------------------------------------->\n")
 
@@ -184,13 +184,16 @@ class Search:
             self.addToCloseList(currentNode)
             self.removeFromOpenList(currentNode)
 
-            print(("lista fechados: "+str(self._closedList)))
-            print("lista abertos: "+str(self._openList))
+            print(f"lista fechados: {self._closedList}")
+            print(f"lista abertos: {self._openList}")
         print('Solucao inexistente')
         return None
 
 
-    def multiStageRun(self):
-        pass
-
-
+    def run(self):
+        [x,y,z,patron]
+        self._goalsNodes.append("Patron")
+        nextInitial = "Patron"
+        for goal in self._goalsNodes:
+            self.aStar(nextInitial)
+            nextInitial = goal
