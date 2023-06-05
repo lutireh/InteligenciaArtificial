@@ -21,10 +21,13 @@ class EuclidianDistance:
         return self._db
 
     def getEuclidianDistance(self, node):
-        return self._db[node]["Euclidiana"]
+        return self._db.get(node)["Euclidiana"]
+
+    def getRealDistance(self, node):
+        return self._db.get(node)["Real"]
 
     def getRelationalStreetName(self, node):
-        return self._db[node]["Nos"]
+        return self._db.get(node)["Nos"]
 
     def getDistanceBetweenStreets(self, initialStreet, goalStreet):
         goalStreetIndex = 0
@@ -36,3 +39,14 @@ class EuclidianDistance:
                 break
 
         return self.getEuclidianDistance(initialStreet)[goalStreetIndex]
+
+    def getRealDistanceBetweenStreets(self,  initialStreet, goalStreet):
+        goalStreetIndex = 0
+        distancesInitialStreet = self.getRelationalStreetName(initialStreet)
+
+        for i, street in enumerate(distancesInitialStreet):
+            if street == goalStreet:
+                goalStreetIndex = i
+                break
+
+        return self.getRealDistance(initialStreet)[goalStreetIndex]

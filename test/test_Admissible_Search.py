@@ -9,7 +9,12 @@ from InteligenciaArtificial.utils.consts.SearchConsts import REAL_DISTANCE, TIME
 
 class EuclidianDistanceTest(unittest.TestCase):
     def setUp(self):
-        EuclidianDistance.getInstance().initializeDb(pd.read_excel('../map/a_star.xlsx', sheet_name=None))
+        EuclidianDistance.getInstance().initializeDb(pd.read_excel('../map/a_star.xlsx', sheet_name=[
+            "Patron", "FT", "Rodoviaria", "Estadio", "EspaçoColibri", "ShoppingNacoesLimeira", "LimeiraShopping",
+            "SupermercadoServBem", "RuadaBoaMorte", "AvenidaSantaBarbara", "RuaBahia", "RuaAntonioCruanesFilho",
+            "RuaBaraodeCampinas", "AvenidaProfJoaquimdeMichieli", "RodoviaLimeira-Piracicaba", "RuaPaschoalMarmo",
+            "AvenidaConegoManuelAlves", "RuaFranciscoDAndrea", "RuaPresidenteRoosevelt", "RuaAugustoJorge",
+            "RodoviaAnhanguera"]))
         Search.distanceFile = '../map/DistanciaReal.txt'
         Search.getInstance(HeuristicEnum.ADMISSIBLE)
         Search.getInstance().clearGoalsNodes()
@@ -45,10 +50,11 @@ class EuclidianDistanceTest(unittest.TestCase):
 
     def testRunSingleObjective(self):
         Search.getInstance().setGoalsNodes(["Rodoviaria"])
-        Search.getInstance().aStar("Patron")
+        Search.getInstance().run()
 
     def testRunMultipleObjective(self):
-        Search.getInstance().setGoalsNodes(["FT", "Rodoviaria"])
+        # Search.getInstance().setGoalsNodes(["FT", "Rodoviaria"])
+        Search.getInstance().setGoalsNodes(['FT', 'Estadio', 'ShoppingNacoesLimeira', 'LimeiraShopping'])
         Search.getInstance().run()
 
 if __name__ == '__main__':
