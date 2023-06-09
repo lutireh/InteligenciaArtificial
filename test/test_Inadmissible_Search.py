@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 
-from InteligenciaArtificial.map.EuclidianDistance import EuclidianDistance
+from InteligenciaArtificial.map.DbHandler import DbHandler
 from InteligenciaArtificial.map.Search import Search
 from InteligenciaArtificial.utils.Enums.HeuristicEnum import HeuristicEnum
 from InteligenciaArtificial.utils.consts.SearchConsts import REAL_DISTANCE, TIME_TO_DESTINATION
@@ -9,13 +9,13 @@ from InteligenciaArtificial.utils.consts.SearchConsts import REAL_DISTANCE, TIME
 
 class EuclidianDistanceTest(unittest.TestCase):
     def setUp(self):
-        EuclidianDistance.getInstance().initializeDb(pd.read_excel('../map/a_star.xlsx', sheet_name=[
+        DbHandler.getInstance().initializeDb(pd.read_excel('../map/a_star.xlsx', sheet_name=[
             "Patron", "FT", "Rodoviaria", "Estadio", "EspaçoColibri", "ShoppingNacoesLimeira", "LimeiraShopping",
             "SupermercadoServBem", "RuadaBoaMorte", "AvenidaSantaBarbara", "RuaBahia", "RuaAntonioCruanesFilho",
             "RuaBaraodeCampinas", "AvenidaProfJoaquimdeMichieli", "RodoviaLimeira-Piracicaba", "RuaPaschoalMarmo",
             "AvenidaConegoManuelAlves", "RuaFranciscoDAndrea", "RuaPresidenteRoosevelt", "RuaAugustoJorge",
             "RodoviaAnhanguera"]))
-        Search.distanceFile = '../map/DistanciaReal.txt'
+        Search.distanceFile = '../map/RealDistance.txt'
         Search.getInstance(HeuristicEnum.INADMISSIBLE)
         Search.getInstance().clearGoalsNodes()
 
@@ -53,10 +53,19 @@ class EuclidianDistanceTest(unittest.TestCase):
         Search.getInstance().run()
 
     def testRunMultipleObjective(self):
-        # Search.getInstance().setGoalsNodes(["FT", "Rodoviaria"])
-        Search.getInstance().setGoalsNodes(['FT', 'Estadio', 'ShoppingNacoesLimeira', 'LimeiraShopping'])
+        admissibleReturn = {'Patron->FT': ['Patron', 'RuaPaschoalMarmo', 'FT'],
+                            'FT->ShoppingNacoesLimeira': ['FT', 'RuaPaschoalMarmo', 'Patron',
+                                                          'RodoviaLimeira-Piracicaba', 'ShoppingNacoesLimeira'],
+                            'ShoppingNacoesLimeira->Estadio': ['ShoppingNacoesLimeira', 'RodoviaLimeira-Piracicaba',
+                                                               'Patron', 'RuadaBoaMorte', 'Rodoviaria',
+                                                               'RuaAugustoJorge', 'Estadio'],
+                            'Estadio->LimeiraShopping': ['Estadio', 'RuaFranciscoDAndrea', 'LimeiraShopping'],
+                            'LimeiraShopping->Patron': ['LimeiraShopping', 'RuaFranciscoDAndrea', 'Patron']}
 
-        Search.getInstance().run()
+        Search.getInstance().setGoalsNodes(['FT', 'Estadio', 'ShoppingNacoesLimeira', 'LimeiraShopping'])
+        solution = Search.getInstance().run()
+        self.assertEqual(len(solution), 5)
+        self.assertNotEqual(solution, admissibleReturn)
 
 if __name__ == '__main__':
     unittest.main()

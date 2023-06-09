@@ -1,10 +1,10 @@
 from copy import deepcopy
-import random
 import networkx as nx
 
-from InteligenciaArtificial.map.EuclidianDistance import EuclidianDistance
+from InteligenciaArtificial.map.DbHandler import DbHandler
 from InteligenciaArtificial.utils.Enums.HeuristicEnum import HeuristicEnum
 from InteligenciaArtificial.utils.consts.SearchConsts import REAL_DISTANCE, TIME_TO_DESTINATION
+from InteligenciaArtificial.utils.consts.DbConsts import *
 
 
 class Search:
@@ -12,7 +12,8 @@ class Search:
     _instance = None
     # this node is the initial and the last node
     _centralNode = 'Patron'
-    distanceFile = './map/DistanciaReal.txt'
+    distanceFile = './map/RealDistance.txt'
+    debug = False
 
     # constructor
     def __init__(self, useHeuristic):
@@ -25,178 +26,166 @@ class Search:
         )
         # initialing variables
         self._openList = []
-        self._openListFromNode = {}
         self._closedList = []
-        self._closedListFromNode = {}
         self._goalsNodes = []
         self._solution = []
         self._solutionOpenList = []
         self._solutionCloseList = []
+        self._searchAccumulatedCost = {}
+        self._currentGoalNode = None
         # setting heuristic
         self._heuristic = HeuristicEnum.ADMISSIBLE if useHeuristic is None else useHeuristic
         # setting the time based on the heuristic
         self._heuristicTime = 1 if self._heuristic is HeuristicEnum.ADMISSIBLE else 20
-        self._currentGoalNode = None
 
     # Singleton
     @classmethod
-    def getInstance(cls, useHeuristic=None):
+    def getInstance(cls, useHeuristic = None):
         if cls._instance is None:
             cls._instance = Search(useHeuristic)
         return cls._instance
 
     # add on the open list nodes that wasn't visited
     def addToOpenList(self, value):
-        if type(value) is str:
-            if value not in self._openList and value not in self._closedList:
-                self._openList.append(value)
-                return f"Node: {value} added to open list"
+        if value not in self._openList and value not in self._closedList:
+            self._openList.append(value)
 
+    # add on the close list and remove from the open list nodes that were visited
     def addToCloseList(self, node):
-        self._closedList.append(node)
-
-    # TODO verificar como é usado
-    def removeFromOpenList(self, node):
         try:
             self._openList.remove(node)
-            return 'nó removido com sucesso'
+            self._closedList.append(node)
         except:
-            'Não é possivel remover'
+            print(f'ERROR: is not possible add to the close list the node: {node}')
 
+    # remove from the close list if the node needs to be revisited
+    def removeToCloseList(self, node):
+        try:
+            self._closedList.remove(node)
+        except:
+            print(f'ERROR: is not possible remove the node: {node}')
+
+    # list of goals nodes
     def setGoalsNodes(self, goalsNodes):
         self._goalsNodes.extend(goalsNodes)
 
-    # TODO verificar se é usado
-    def getGoalsNodes(self):
-        return self._goalsNodes
-
+    # clear goals nodes for unitary tests
     def clearGoalsNodes(self):
-        self._goalsNodes.clear()
+        self._goalsNodes = []
 
-    def getGraph(self):
-        return self._graph
-
+    # get the next goal node
     def getCurrentGoalNode(self):
         return self._currentGoalNode
 
+    # add the visited node to the solution
     def addToSolution(self, node):
         self._solution.append(node)
 
-    def getSolution(self):
-        return self._solution
-
+    # get the adjacent nodes of the node that is passed for the function (using neighbors from the lib networkx)
     def getAdjacentNodes(self, node):
-        adjacentList = list(self._graph.neighbors(node))
+        return list(self._graph.neighbors(node))
 
-        return adjacentList
-
-    # return the value between two nodes depending on the property (realDistance or timeToDestination)
+    # return the real distance or the time to destination between two nodes
     def getEdgeProperty(self, node1, node2, property):
-        propertyValue = nx.path_weight(self._graph, [node1, node2], property)
-        return propertyValue
+        return nx.path_weight(self._graph, [node1, node2], property)
 
+    # get the heuristic function for the admissible or the inadmissible heuristic
+    # the heuristic is based in what as passed in the main class
     def heuristcFunction(self, node):
-        distanceBetweenNodes = 0
-
         if self._heuristic is HeuristicEnum.ADMISSIBLE:
-            distanceBetweenNodes = EuclidianDistance.getInstance().getDistanceBetweenStreets(
-            node,
-            self.getCurrentGoalNode()
-            )
+            distanceBetweenNodes = DbHandler.getInstance().getDBColumns(node, self.getCurrentGoalNode(),
+                                                                        DB_EUCLIDIAN_DISTANCE)
         else:
-            distanceBetweenNodes = EuclidianDistance.getInstance().getRealDistanceBetweenStreets(
-                node,
-                self.getCurrentGoalNode()
-            )
-
+            distanceBetweenNodes = DbHandler.getInstance().getDBColumns(node, self.getCurrentGoalNode(),
+                                                                        DB_REAL_DISTANCE)
         return distanceBetweenNodes * self._heuristicTime
 
+    # search for the next goal node getting the closest for the current node
     def closestGoalNode(self, currentNode):
-        closeNodeDistance = EuclidianDistance.getInstance().getDistanceBetweenStreets(
-            currentNode,
-            self._goalsNodes[0]
-        )
+        closeNodeDistance = DbHandler.getInstance().getDBColumns(currentNode, self._goalsNodes[0],
+                                                                 DB_EUCLIDIAN_DISTANCE)
+        # get the first index of the array for an organized search and to get the name of the nodes
         closeGoalNode = self._goalsNodes[0]
         for node in self._goalsNodes:
-            tempNode = EuclidianDistance.getInstance().getDistanceBetweenStreets(currentNode, node)
-            if tempNode < closeNodeDistance:
-                closeNodeDistance = tempNode
+            # for each node, get the euclidian distance for searching the closest
+            auxNode = DbHandler.getInstance().getDBColumns(currentNode, node, DB_EUCLIDIAN_DISTANCE)
+            if auxNode < closeNodeDistance:
+                closeNodeDistance = auxNode
                 closeGoalNode = node
         return closeGoalNode
 
-    def avaliationFunction(self, node, accumulatedCost):
-        return node + accumulatedCost
+    def avaliationFunction(self, heuristic, accumulatedCost):
+        return heuristic + accumulatedCost
 
     def cost(self, node1, node2):
-        cost = self.getEdgeProperty(node1, node2, REAL_DISTANCE) * self.getEdgeProperty(node1, node2, TIME_TO_DESTINATION)
+        realDistance = self.getEdgeProperty(node1, node2, REAL_DISTANCE)
+        timeToDestination = self.getEdgeProperty(node1, node2, TIME_TO_DESTINATION)
+        cost = realDistance * timeToDestination
+        print(f"{node1}->{node2} | CUSTO: {cost}")
         return cost
 
-    # TODO verificar se da pra refatorar o A*
+    # runes the aStar for each goal
     def aStar(self, initialNode):
-
+        # initialize the current goal node with the closest goal node from Patron - the initial node
         self._currentGoalNode = self.closestGoalNode(initialNode)
-
+        print(f"======={initialNode}->{self._currentGoalNode}===========")
+        # creating the dictionaries
         accumulatedCost = {}
-        accumulatedCost[initialNode] = 0
-        print(f'Custo Inicial: {accumulatedCost}')
-
-        # funciona como se fosse uma lista ligada, armazena qual nó é "pai" de qual
         previousNode = {}
-        previousNode[initialNode] = initialNode  # o nó inicial não tem nó anterior
-        print(f'Previous Inicial: {previousNode}')
-
-        self.addToOpenList(initialNode)  # inicial começa como aberto para algoritmo iniciar por ele
+        # initializing the dictionary with Patron - the initial node and the cost of 0
+        accumulatedCost[initialNode] = 0
+        # initializing the dictionary with Patron
+        # it doesn't have a previousNode so that is being initialized with Patron itself
+        # has the behavior of a linked list
+        previousNode[initialNode] = initialNode
+        # initializing the open list with Patron
+        self.addToOpenList(initialNode)
 
         while len(self._openList) > 0:
             currentNode = None
 
             for openNode in self._openList:
-
-                if currentNode is not None:
-                    print(f"Avaliaçao aberto:{openNode}: {self.avaliationFunction(self.heuristcFunction(openNode), accumulatedCost[openNode])}")
-                    print(f"Avaliaçao corrente:{currentNode}: {self.avaliationFunction(self.heuristcFunction(currentNode), accumulatedCost[currentNode])}")
-
-                if (currentNode is None or self.avaliationFunction(self.heuristcFunction(openNode), accumulatedCost[openNode])
+                # the first interaction is None so the current node receive the open node
+                if (currentNode is None or
+                        self.avaliationFunction(self.heuristcFunction(openNode), accumulatedCost[openNode])
                         < self.avaliationFunction(self.heuristcFunction(currentNode), accumulatedCost[currentNode])):
                     currentNode = openNode
-                    print(f"CORRENTE NODE: {currentNode}")
 
+            # after the first interaction, if the current node is None, the function break
             if currentNode is None:
                 break
 
             if currentNode == self._currentGoalNode:
                 self.addToCloseList(currentNode)
-                self.removeFromOpenList(currentNode)
-
+                # give the solution list
                 while previousNode[currentNode] is not currentNode:
                     self.addToSolution(currentNode)
                     currentNode = previousNode[currentNode]
-
                 self.addToSolution(currentNode)
                 self._solution.reverse()
 
                 print(f"Custo Acumulado: {accumulatedCost}")
-                print(f"SOLUTION: {self._solution}")
+                print(f"Solução: {self._solution}")
+                self._searchAccumulatedCost = deepcopy(accumulatedCost)
                 return self._solution
 
             for adjacentNode in self.getAdjacentNodes(currentNode):
-                if adjacentNode not in self._openList and adjacentNode not in self._closedList:
+
+                adjdacentNodeCost = accumulatedCost[currentNode] + self.cost(currentNode, adjacentNode)
+
+                if (adjacentNode not in self._openList) and (adjacentNode not in self._closedList):
                     self.addToOpenList(adjacentNode)
                     previousNode[adjacentNode] = currentNode
-                    accumulatedCost[adjacentNode] = accumulatedCost[currentNode] + self.cost(currentNode, adjacentNode)
+                    accumulatedCost[adjacentNode] = adjdacentNodeCost
                 else:
-                    if accumulatedCost[adjacentNode] > accumulatedCost[currentNode] + self.cost(currentNode,
-                                                                                                adjacentNode):
-                        accumulatedCost[adjacentNode] = accumulatedCost[currentNode] + self.cost(currentNode,
-                                                                                                 adjacentNode)
+                    if adjdacentNodeCost < accumulatedCost[adjacentNode]:
+                        accumulatedCost[adjacentNode] = adjdacentNodeCost
                         previousNode[adjacentNode] = currentNode
-
                         if adjacentNode in self._closedList:
-                            self._closedList.remove(adjacentNode)
+                            self.removeToCloseList(adjacentNode)
                             self.addToOpenList(adjacentNode)
 
             self.addToCloseList(currentNode)
-            self.removeFromOpenList(currentNode)
 
         return None
 
@@ -206,8 +195,10 @@ class Search:
         multipleClose = {}
         goalsList = deepcopy(self._goalsNodes)
         nextInitial = "Patron"
+        nodeCosts = {}
         solution = []
 
+        # runs aStar for each goal
         for goal in range(len(goalsList)):
             solution = self.aStar(nextInitial)
             currentGoal = self._currentGoalNode
@@ -215,27 +206,30 @@ class Search:
             multipleSolution[currentIteration] = 'Solução inexistente' if solution is None else solution
             multipleOpen[currentIteration] = deepcopy(self._openList)
             multipleClose[currentIteration] = deepcopy(self._closedList)
+            nodeCosts[currentIteration] = deepcopy(self._searchAccumulatedCost)
             nextInitial = currentGoal
             self._goalsNodes.remove(currentGoal)
             self.clearNodes()
-
+        # runs again for getting back to Patron
         self.setGoalsNodes(["Patron"])
         solution = self.aStar(nextInitial)
         multipleSolution[f"{nextInitial}->Patron"] = 'Solução inexistente' if solution is None else solution
         multipleOpen[f"{nextInitial}->Patron"] = deepcopy(self._openList)
         multipleClose[f"{nextInitial}->Patron"] = deepcopy(self._closedList)
+        nodeCosts[f"{nextInitial}->Patron"] = deepcopy(self._searchAccumulatedCost)
+        # print the solutions
+        print("\n\nMULTIPLOS OBJETIVOS SOLUÇÕES FINAIS:")
+        print(f"Solução final: {multipleSolution}")
+        print(f"Lista Aberta final: {multipleOpen}")
+        print(f"Lista fechada final: {multipleClose}")
+        print(f"Custo Acumulado final: {nodeCosts}")
 
-        print(f"Soluções: {multipleSolution}")
-        print(f"Listas Abertas: {multipleOpen}")
-        print(f"Listas Fechadas: {multipleClose}")
-
+        return multipleSolution
 
     def clearNodes(self):
         self._openList = []
-        self._openListFromNode = {}
         self._closedList = []
-        self._closedListFromNode = {}
         self._solution = []
         self._solutionOpenList = []
         self._solutionCloseList = []
-
+        self._searchAccumulatedCost = {}

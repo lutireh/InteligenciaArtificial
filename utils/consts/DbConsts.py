@@ -1,0 +1,4 @@
+DB_NODES = 'Nos'
+DB_EUCLIDIAN_DISTANCE = 'Euclidiana'
+DB_REAL_DISTANCE = 'Real'
+DB_ESTIMATED_TIME = 'Tempo estimado'

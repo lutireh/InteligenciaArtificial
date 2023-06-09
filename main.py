@@ -2,14 +2,14 @@ import pandas as pd
 from pyvis.network import Network
 import networkx as nx
 
-from InteligenciaArtificial.map.EuclidianDistance import EuclidianDistance
+from InteligenciaArtificial.map.DbHandler import DbHandler
 from InteligenciaArtificial.map.Search import Search
 from InteligenciaArtificial.utils.Enums.HeuristicEnum import HeuristicEnum
 
 goalNodes = []
 possibleNodes = []
 
-print('Olá, insira a lista de nós objetivos abaixo, um de cada vez\nQuando não quiser mais inserir nós, basta dar enter com a linha em branco!')
+print('\nOlá, insira a lista de nós objetivos abaixo, um de cada vez\nQuando não quiser mais inserir nós, basta dar enter com a linha em branco!')
 
 with open('./map/possibleNodes.txt', 'r', encoding='utf-8') as file:
 
@@ -37,12 +37,7 @@ while True:
 print(f'Nós para buscar: {goalNodes}')
 
 #   Primeira inicialização passamos a heurística que vamos utilizar
-
-
 search = Search.getInstance(HeuristicEnum.ADMISSIBLE)
-EuclidianDistance.getInstance().initializeDb(pd.read_excel('map/a_star.xlsx', sheet_name=None))
+DbHandler.getInstance().initializeDb(pd.read_excel('map/a_star.xlsx', sheet_name=None))
 search.setGoalsNodes(goalNodes)
-nt = Network('500px', '500px')
-nt.from_nx(search.getGraph())
-nt.show('nx.html')
 search.run()

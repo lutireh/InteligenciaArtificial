@@ -1,4 +1,0 @@
-SOLUTION: ['Patron', 'RuadaBoaMorte', 'AvenidaSantaBarbara', 'EspaçoColibri']
-Patron COlibri via boa morte: 724 + 1230 + 1250 = 3204
-Patron via antonio cruanes: 2800 + 1310 = 4110
-Patron via Piracicaba: 2630 + 450 + 3430 = 6510
