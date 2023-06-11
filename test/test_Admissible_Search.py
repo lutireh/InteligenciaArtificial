@@ -50,7 +50,7 @@ class EuclidianDistanceTest(unittest.TestCase):
         self.assertEqual(timeResult, expectedTime)
 
     def testRunSingleObjective(self):
-        Search.getInstance().setGoalsNodes(["Rodoviaria"])
+        Search.getInstance().setGoalsNodes(["FT"])
         Search.getInstance().run()
 
     def testRunMultipleObjective(self):

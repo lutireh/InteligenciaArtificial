@@ -32,6 +32,7 @@ class Search:
         self._solutionOpenList = []
         self._solutionCloseList = []
         self._searchAccumulatedCost = {}
+        self._totalCost = 0
         self._currentGoalNode = None
         # setting heuristic
         self._heuristic = HeuristicEnum.ADMISSIBLE if useHeuristic is None else useHeuristic
@@ -121,14 +122,13 @@ class Search:
         realDistance = self.getEdgeProperty(node1, node2, REAL_DISTANCE)
         timeToDestination = self.getEdgeProperty(node1, node2, TIME_TO_DESTINATION)
         cost = realDistance * timeToDestination
-        print(f"{node1}->{node2} | CUSTO: {cost}")
         return cost
 
     # runes the aStar for each goal
     def aStar(self, initialNode):
         # initialize the current goal node with the closest goal node from Patron - the initial node
         self._currentGoalNode = self.closestGoalNode(initialNode)
-        print(f"======={initialNode}->{self._currentGoalNode}===========")
+        print(f"\n======={initialNode}->{self._currentGoalNode}===========")
         # creating the dictionaries
         accumulatedCost = {}
         previousNode = {}
@@ -140,6 +140,7 @@ class Search:
         previousNode[initialNode] = initialNode
         # initializing the open list with Patron
         self.addToOpenList(initialNode)
+        self._totalCost = 0
 
         while len(self._openList) > 0:
             currentNode = None
@@ -161,10 +162,12 @@ class Search:
                 while previousNode[currentNode] is not currentNode:
                     self.addToSolution(currentNode)
                     currentNode = previousNode[currentNode]
+                    self._totalCost = accumulatedCost[self._currentGoalNode]
                 self.addToSolution(currentNode)
                 self._solution.reverse()
-
-                print(f"Custo Acumulado: {accumulatedCost}")
+                print(f"Lista nós fechados: {self._closedList}")
+                print(f"Lista nós abertos: {self._openList}")
+                print(f"Custo Acumulado: {self._totalCost}")
                 print(f"Solução: {self._solution}")
                 self._searchAccumulatedCost = deepcopy(accumulatedCost)
                 return self._solution
@@ -186,6 +189,8 @@ class Search:
                             self.addToOpenList(adjacentNode)
 
             self.addToCloseList(currentNode)
+            print(f"Lista nós fechados: {self._closedList}")
+            print(f"Lista nós abertos: {self._openList}")
 
         return None
 
@@ -206,23 +211,29 @@ class Search:
             multipleSolution[currentIteration] = 'Solução inexistente' if solution is None else solution
             multipleOpen[currentIteration] = deepcopy(self._openList)
             multipleClose[currentIteration] = deepcopy(self._closedList)
-            nodeCosts[currentIteration] = deepcopy(self._searchAccumulatedCost)
+            nodeCosts[currentIteration] = self._totalCost
             nextInitial = currentGoal
             self._goalsNodes.remove(currentGoal)
             self.clearNodes()
+
         # runs again for getting back to Patron
         self.setGoalsNodes(["Patron"])
         solution = self.aStar(nextInitial)
         multipleSolution[f"{nextInitial}->Patron"] = 'Solução inexistente' if solution is None else solution
         multipleOpen[f"{nextInitial}->Patron"] = deepcopy(self._openList)
         multipleClose[f"{nextInitial}->Patron"] = deepcopy(self._closedList)
-        nodeCosts[f"{nextInitial}->Patron"] = deepcopy(self._searchAccumulatedCost)
+        nodeCosts[f"{nextInitial}->Patron"] = self._totalCost
+
+        totalAStarCost = sum([cost for cost in nodeCosts.values()])
+
         # print the solutions
         print("\n\nMULTIPLOS OBJETIVOS SOLUÇÕES FINAIS:")
-        print(f"Solução final: {multipleSolution}")
         print(f"Lista Aberta final: {multipleOpen}")
         print(f"Lista fechada final: {multipleClose}")
-        print(f"Custo Acumulado final: {nodeCosts}")
+
+        print(f"\nSolução final: {multipleSolution}")
+        print(f"Custo Acumulado por objetivo: {nodeCosts}")
+        print(f"Custo Acumulado total: {totalAStarCost}")
 
         return multipleSolution
 

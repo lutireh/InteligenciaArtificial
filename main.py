@@ -1,6 +1,4 @@
 import pandas as pd
-from pyvis.network import Network
-import networkx as nx
 
 from InteligenciaArtificial.map.DbHandler import DbHandler
 from InteligenciaArtificial.map.Search import Search
@@ -36,8 +34,8 @@ while True:
 
 print(f'Nós para buscar: {goalNodes}')
 
-#   Primeira inicialização passamos a heurística que vamos utilizar
-search = Search.getInstance(HeuristicEnum.ADMISSIBLE)
+# passing the heuristic that are used -> ADMISSIBLE or INADMISSIBLE
+search = Search.getInstance(HeuristicEnum.INADMISSIBLE)
 DbHandler.getInstance().initializeDb(pd.read_excel('map/a_star.xlsx', sheet_name=None))
 search.setGoalsNodes(goalNodes)
 search.run()
