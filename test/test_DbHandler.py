@@ -5,7 +5,7 @@ from InteligenciaArtificial.map.DbHandler import DbHandler
 from InteligenciaArtificial.utils.consts.DbConsts import DB_EUCLIDIAN_DISTANCE
 
 
-class EuclidianDistanceTest(unittest.TestCase):
+class DbHandlerTest(unittest.TestCase):
     def setUp(self):
         DbHandler.getInstance().initializeDb(pd.read_excel('../map/a_star.xlsx', sheet_name=None))
 

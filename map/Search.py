@@ -33,6 +33,7 @@ class Search:
         self._solutionCloseList = []
         self._searchAccumulatedCost = {}
         self._totalCost = 0
+        self.finalCost = 0
         self._currentGoalNode = None
         # setting heuristic
         self._heuristic = HeuristicEnum.ADMISSIBLE if useHeuristic is None else useHeuristic
@@ -235,7 +236,9 @@ class Search:
         print(f"Custo Acumulado por objetivo: {nodeCosts}")
         print(f"Custo Acumulado total: {totalAStarCost}")
 
+        self.finalCost = totalAStarCost
         return multipleSolution
+
 
     def clearNodes(self):
         self._openList = []
@@ -244,3 +247,5 @@ class Search:
         self._solutionOpenList = []
         self._solutionCloseList = []
         self._searchAccumulatedCost = {}
+        self.finalCost = 0
+        self._totalCost = 0
