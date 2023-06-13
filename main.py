@@ -35,7 +35,7 @@ while True:
 print(f'Nós para buscar: {goalNodes}')
 
 # passing the heuristic that are used -> ADMISSIBLE or INADMISSIBLE
-search = Search.getInstance(HeuristicEnum.ADMISSIBLE)
+search = Search.getInstance(HeuristicEnum.INADMISSIBLE)
 DbHandler.getInstance().initializeDb(pd.read_excel('map/a_star.xlsx', sheet_name=None))
 search.setGoalsNodes(goalNodes)
 search.run()
